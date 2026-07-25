@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Weatherly | Weather App</title>
+
+
+    <!-- Main CSS -->
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+
+    <!-- Leaflet Map CSS -->
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+
+    <!-- Font Awesome -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <!-- =========================
+         BACKGROUND EFFECTS
+    ========================== -->
+
+    <div class="background">
+
+        <div class="blob blob-1"></div>
+
+        <div class="blob blob-2"></div>
+
+        <div class="blob blob-3"></div>
+
+    </div>
+
+
+    <!-- =========================
+         MAIN APP
+    ========================== -->
+
+    <main class="app-container">
+
+
+        <!-- =========================
+             HEADER
+        ========================== -->
+
+        <header class="header">
+
+            <div class="logo">
+
+                <i class="fa-solid fa-cloud-sun"></i>
+
+                <span>Weatherly</span>
+
+            </div>
+
+
+            <!-- Dark Mode Button -->
+
+            <button
+                id="theme-toggle"
+                class="theme-button"
+                type="button"
+            >
+
+                <i class="fa-solid fa-moon"></i>
+
+            </button>
+
+        </header>
+
+
+
+        <!-- =========================
+             HERO SECTION
+        ========================== -->
+
+        <section class="hero">
+
+            <h1>
+                What's the weather like?
+            </h1>
+
+            <p>
+                Discover the weather anywhere in the world.
+            </p>
+
+        </section>
+
+
+
+        <!-- =========================
+             SEARCH BOX
+        ========================== -->
+
+        <form
+            method="POST"
+            class="search-box"
+        >
+
+            <div class="search-input">
+
+                <i class="fa-solid fa-location-dot"></i>
+
+                <input
+                    type="text"
+                    name="city"
+                    placeholder="Search for a city..."
+                    autocomplete="off"
+                    required
+                >
+
+            </div>
+
+
+            <button type="submit">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <span>
+                    Search
+                </span>
+
+            </button>
+
+        </form>
+
+
+
+        <!-- =========================
+             ERROR MESSAGE
+        ========================== -->
+
+        {% if error %}
+
+        <div class="error-message">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            <span>
+                {{ error }}
+            </span>
+
+        </div>
+
+        {% endif %}
+
+
+
+        <!-- =========================
+             CURRENT WEATHER
+        ========================== -->
+
+        {% if weather %}
+
+        <section class="weather-card">
+
+
+            <!-- Location -->
+
+            <div class="weather-location">
+
+                <div>
+
+                    <p class="location-label">
+                        CURRENT WEATHER
+                    </p>
+
+
+                    <h2>
+
+                        <i class="fa-solid fa-location-dot"></i>
+
+                        {{ weather.city }},
+                        {{ weather.country }}
+
+                    </h2>
+
+                </div>
+
+
+                <!-- Current Date -->
+
+                <div
+                    class="weather-date"
+                    id="date"
+                ></div>
+
+            </div>
+
+
+
+            <!-- Main Weather -->
+
+            <div class="main-weather">
+
+
+                <!-- Weather Icon -->
+
+                <div class="weather-icon-container">
+
+                    <img
+                        src="https://openweathermap.org/img/wn/{{ weather.icon }}@4x.png"
+                        alt="{{ weather.description }}"
+                    >
+
+                </div>
+
+
+
+                <!-- Temperature -->
+
+                <div class="temperature-section">
+
+                    <div class="temperature">
+
+                        {{ weather.temperature }}<span>°C</span>
+
+                    </div>
+
+
+                    <p class="weather-description">
+
+                        {{ weather.description }}
+
+                    </p>
+
+
+                    <p class="feels-like">
+
+                        Feels like
+                        {{ weather.feels_like }}°C
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =========================
+                 WEATHER DETAILS
+            ========================== -->
+
+            <div class="weather-details">
+
+
+                <!-- Humidity -->
+
+                <div class="weather-detail">
+
+                    <div class="detail-icon humidity">
+
+                        <i class="fa-solid fa-droplet"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <p>
+                            Humidity
+                        </p>
+
+                        <h3>
+                            {{ weather.humidity }}%
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Wind -->
+
+                <div class="weather-detail">
+
+                    <div class="detail-icon wind">
+
+                        <i class="fa-solid fa-wind"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <p>
+                            Wind Speed
+                        </p>
+
+                        <h3>
+                            {{ weather.wind }} m/s
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Feels Like -->
+
+                <div class="weather-detail">
+
+                    <div class="detail-icon temperature-icon">
+
+                        <i class="fa-solid fa-temperature-half"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <p>
+                            Feels Like
+                        </p>
+
+                        <h3>
+                            {{ weather.feels_like }}°C
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+        {% endif %}
+
+
+
+        <!-- =========================
+             5-DAY FORECAST
+        ========================== -->
+
+        {% if forecast %}
+
+        <section class="forecast-section">
+
+
+            <!-- Section Heading -->
+
+            <div class="section-title">
+
+                <h2>
+
+                    <i class="fa-solid fa-calendar-days"></i>
+
+                    5-Day Forecast
+
+                </h2>
+
+
+                <p>
+
+                    Weather predictions for the upcoming days
+
+                </p>
+
+            </div>
+
+
+
+            <!-- Forecast Cards -->
+
+            <div class="forecast-container">
+
+
+                {% for day in forecast %}
+
+
+                <div class="forecast-card">
+
+
+                    <!-- Date -->
+
+                    <h3>
+
+                        {{ day.date }}
+
+                    </h3>
+
+
+
+                    <!-- Weather Icon -->
+
+                    <img
+                        src="https://openweathermap.org/img/wn/{{ day.icon }}@2x.png"
+                        alt="{{ day.description }}"
+                    >
+
+
+
+                    <!-- Temperature -->
+
+                    <h2>
+
+                        {{ day.temperature }}°C
+
+                    </h2>
+
+
+
+                    <!-- Weather Description -->
+
+                    <p class="forecast-description">
+
+                        {{ day.description }}
+
+                    </p>
+
+
+
+                    <!-- Forecast Information -->
+
+                    <div class="forecast-info">
+
+
+                        <!-- Humidity -->
+
+                        <span>
+
+                            <i class="fa-solid fa-droplet"></i>
+
+                            {{ day.humidity }}%
+
+                        </span>
+
+
+
+                        <!-- Wind -->
+
+                        <span>
+
+                            <i class="fa-solid fa-wind"></i>
+
+                            {{ day.wind }} m/s
+
+                        </span>
+
+
+                    </div>
+
+
+                </div>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+        </section>
+
+        {% endif %}
+
+
+
+        <!-- =========================
+             INTERACTIVE WEATHER MAP
+        ========================== -->
+
+        {% if weather %}
+
+        <section class="map-section">
+
+
+            <!-- Map Heading -->
+
+            <div class="section-title">
+
+                <h2>
+
+                    <i class="fa-solid fa-map-location-dot"></i>
+
+                    Weather Location
+
+                </h2>
+
+
+                <p>
+
+                    Explore {{ weather.city }} on the interactive map
+
+                </p>
+
+            </div>
+
+
+
+            <!-- Map Container -->
+
+            <div id="weather-map"></div>
+
+
+        </section>
+
+        {% endif %}
+
+
+
+        <!-- =========================
+             FOOTER
+        ========================== -->
+
+        <footer>
+
+            <p>
+
+                Powered by OpenWeatherMap
+
+            </p>
+
+
+            <p>
+
+                Built with Flask & Docker
+
+            </p>
+
+        </footer>
+
+
+    </main>
+
+
+
+    <!-- =========================
+         LEAFLET MAP JAVASCRIPT
+    ========================== -->
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+
+
+    <!-- =========================
+         APPLICATION JAVASCRIPT
+    ========================== -->
+
+    <script>
+
+
+        /* =========================
+           CURRENT DATE
+        ========================== */
+
+        const dateElement =
+            document.getElementById("date");
+
+
+        if (dateElement) {
+
+            const today =
+                new Date();
+
+
+            dateElement.innerText =
+                today.toLocaleDateString(
+                    "en-US",
+                    {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric"
+                    }
+                );
+
+        }
+
+
+
+        /* =========================
+           DARK MODE
+        ========================== */
+
+        const themeButton =
+            document.getElementById(
+                "theme-toggle"
+            );
+
+
+        if (themeButton) {
+
+            themeButton.addEventListener(
+                "click",
+                function () {
+
+
+                    // Toggle dark mode
+
+                    document.body.classList.toggle(
+                        "dark-mode"
+                    );
+
+
+                    // Get icon
+
+                    const icon =
+                        themeButton.querySelector(
+                            "i"
+                        );
+
+
+                    // Change icon
+
+                    if (
+                        document.body.classList.contains(
+                            "dark-mode"
+                        )
+                    ) {
+
+                        icon.classList.remove(
+                            "fa-moon"
+                        );
+
+                        icon.classList.add(
+                            "fa-sun"
+                        );
+
+                    }
+
+                    else {
+
+                        icon.classList.remove(
+                            "fa-sun"
+                        );
+
+                        icon.classList.add(
+                            "fa-moon"
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+
+        /* =========================
+           INTERACTIVE WEATHER MAP
+        ========================== */
+
+        {% if weather %}
+
+
+        // Get latitude from Flask
+
+        const latitude =
+            {{ weather.lat }};
+
+
+        // Get longitude from Flask
+
+        const longitude =
+            {{ weather.lon }};
+
+
+
+        // Create map
+
+        const map =
+            L.map(
+                "weather-map"
+            ).setView(
+                [
+                    latitude,
+                    longitude
+                ],
+                10
+            );
+
+
+
+        // Add OpenStreetMap tiles
+
+        L.tileLayer(
+
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+
+            {
+
+                maxZoom: 19,
+
+                attribution:
+                    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+
+            }
+
+        ).addTo(map);
+
+
+
+        // Add location marker
+
+        const marker =
+            L.marker(
+                [
+                    latitude,
+                    longitude
+                ]
+            ).addTo(map);
+
+
+
+        // Add popup to marker
+
+        marker.bindPopup(
+
+            `
+                <div style="text-align: center;">
+
+                    <strong>
+                        {{ weather.city }},
+                        {{ weather.country }}
+                    </strong>
+
+                    <br><br>
+
+                    🌡️
+                    {{ weather.temperature }}°C
+
+                    <br>
+
+                    🌤️
+                    {{ weather.description }}
+
+                </div>
+            `
+
+        ).openPopup();
+
+
+        {% endif %}
+
+
+
+    </script>
+
+
+</body>
+
+</html>
