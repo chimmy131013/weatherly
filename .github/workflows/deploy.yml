@@ -13,7 +13,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Record Deployment Start
+        run: echo "DEPLOY_START=$(date +%s)" >> $GITHUB_ENV
+
       - name: Deploy to EC2
+        id: deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -26,3 +30,28 @@ jobs:
             sudo docker rm weatherly || true
             sudo docker build -t weatherly .
             sudo docker run -d --env-file .env -p 80:5000 --name weatherly weatherly
+
+      - name: Send Deployment Insights
+        if: always()
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - DEPLOY_START))
+
+          if [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            STATUS="Success"
+          else
+            STATUS="Failed"
+          fi
+
+          curl -X POST "${{ secrets.DEPLOYMENT_INSIGHTS_URL }}/api/deployments" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"project\": \"Weatherly\",
+              \"version\": \"v${{ github.run_number }}\",
+              \"environment\": \"Production\",
+              \"status\": \"$STATUS\",
+              \"duration\": \"${DURATION}s\",
+              \"deployedBy\": \"${{ github.actor }}\",
+              \"commit\": \"${{ github.sha }}\",
+              \"branch\": \"${{ github.ref_name }}\"
+            }"
