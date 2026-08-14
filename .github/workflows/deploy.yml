@@ -1,3 +1,4 @@
+```yaml
 name: Deploy Weatherly to AWS EC2
 
 on:
@@ -55,3 +56,4 @@ jobs:
               \"commit\": \"${{ github.sha }}\",
               \"branch\": \"${{ github.ref_name }}\"
             }"
+```
