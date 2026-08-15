@@ -1,65 +1,66 @@
 name: Deploy Weatherly to AWS EC2
 
 on:
-push:
-branches:
-- main
+  push:
+    branches:
+      - main
 
 jobs:
-deploy:
-runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-steps:
-  - name: Checkout Repository
-    uses: actions/checkout@v4
+      - name: Record Deployment Start
+        run: echo "DEPLOY_START=$(date +%s)" >> "$GITHUB_ENV"
 
-  - name: Record Deployment Start
-    run: echo "DEPLOY_START=$(date +%s)" >> "$GITHUB_ENV"
+      - name: Deploy to EC2
+        id: deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd weatherly
+            git pull origin main
 
-  - name: Deploy to EC2
-    id: deploy
-    uses: appleboy/ssh-action@v1.0.3
-    with:
-      host: ${{ secrets.EC2_HOST }}
-      username: ${{ secrets.EC2_USER }}
-      key: ${{ secrets.EC2_SSH_KEY }}
-      script: |
-        cd weatherly
-        git pull origin main
-        sudo docker stop weatherly || true
-        sudo docker rm weatherly || true
-        sudo docker build -t weatherly .
-        sudo docker run -d \
-          --restart unless-stopped \
-          --env-file .env \
-          -p 80:5000 \
-          --name weatherly \
-          weatherly
+            sudo docker stop weatherly || true
+            sudo docker rm weatherly || true
 
-  - name: Send Deployment Insights
-    if: always()
-    run: |
-      END_TIME=$(date +%s)
-      DURATION=$((END_TIME - DEPLOY_START))
+            sudo docker build -t weatherly .
 
-      if [ "${{ steps.deploy.outcome }}" = "success" ]; then
-        STATUS="Success"
-      else
-        STATUS="Failed"
-      fi
+            sudo docker run -d \
+              --restart unless-stopped \
+              --env-file .env \
+              -p 80:5000 \
+              --name weatherly \
+              weatherly
 
-      curl --fail-with-body -sS -X POST \
-        "${{ secrets.DEPLOYMENT_INSIGHTS_URL }}/api/deployments" \
-        -H "Content-Type: application/json" \
-        -d "{
-          \"project\": \"Weatherly\",
-          \"version\": \"v${{ github.run_number }}\",
-          \"environment\": \"Production\",
-          \"status\": \"$STATUS\",
-          \"duration\": \"${DURATION}s\",
-          \"deployedBy\": \"${{ github.actor }}\",
-          \"commit\": \"${{ github.sha }}\",
-          \"branch\": \"${{ github.ref_name }}\"
-        }"
-        
+      - name: Send Deployment Insights
+        if: always()
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - DEPLOY_START))
+
+          if [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            STATUS="Success"
+          else
+            STATUS="Failed"
+          fi
+
+          curl --fail-with-body -sS -X POST \
+            "${{ secrets.DEPLOYMENT_INSIGHTS_URL }}/api/deployments" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"project\": \"Weatherly\",
+              \"version\": \"v${{ github.run_number }}\",
+              \"environment\": \"Production\",
+              \"status\": \"$STATUS\",
+              \"duration\": \"${DURATION}s\",
+              \"deployedBy\": \"${{ github.actor }}\",
+              \"commit\": \"${{ github.sha }}\",
+              \"branch\": \"${{ github.ref_name }}\"
+            }"
